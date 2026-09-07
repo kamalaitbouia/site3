@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e7490" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <!-- Background with smooth rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#grad1)" />
+  
+  <!-- Outer subtle border -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="#2dd4bf" stroke-width="6" stroke-opacity="0.25" />
+
+  <!-- Storage Box / Parcel Icon -->
+  <g transform="translate(106, 120)">
+    <!-- Box base -->
+    <path d="M30 110 L150 160 L270 110 L270 230 L150 280 L30 230 Z" fill="url(#boxGrad)" />
+    <!-- Box top left flap -->
+    <path d="M30 110 L150 60 L150 160 L30 110 Z" fill="#2dd4bf" opacity="0.9" />
+    <!-- Box top right flap -->
+    <path d="M150 60 L270 110 L150 160 L150 60 Z" fill="#5eead4" opacity="0.95" />
+    <!-- Center crease -->
+    <path d="M150 160 L150 280" stroke="#042f2e" stroke-width="4" stroke-linecap="round" opacity="0.4" />
+    <!-- Tape strip over box -->
+    <path d="M135 70 L165 57 L165 170 L135 158 Z" fill="#fbbf24" opacity="0.9" />
+  </g>
+
+  <!-- Resale / Price Tag badge on bottom right -->
+  <g transform="translate(260, 270)">
+    <circle cx="90" cy="90" r="80" fill="#0f172a" opacity="0.5" />
+    <circle cx="85" cy="85" r="76" fill="url(#accentGrad)" stroke="#ffffff" stroke-width="6" />
+    <!-- Currency / Profit chart spark inside badge -->
+    <path d="M55 95 L75 75 L95 85 L120 55" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <polygon points="120,55 106,55 120,69" fill="#ffffff" />
+    <!-- Star shine -->
+    <circle cx="65" cy="65" r="4" fill="#ffffff" />
+  </g>
+</svg>

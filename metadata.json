@@ -1,0 +1,6 @@
+{
+  "name": "مخزوني - إدارة المخزون والأرباح",
+  "description": "تطبيق متكامل لمساعدة البائعين على تنظيم وتخزين المنتجات قبل البيع على Vinted والمنصات الأخرى، مع تتبع دقيق للمخزون، أسعار التكلفة، والأرباح الصافية.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
