@@ -22,6 +22,7 @@ interface ProductModalProps {
   suggestedSku: string;
   currency: Currency;
   existingLocations: string[];
+  initialLocation?: string;
 }
 
 const POPULAR_BRANDS = ['Zara', 'Nike', 'Adidas', "Levi's", 'Ralph Lauren', 'Massimo Dutti', 'Mango', 'H&M', 'Vintage', 'Tommy Hilfiger'];
@@ -34,6 +35,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   suggestedSku,
   currency,
   existingLocations,
+  initialLocation,
 }) => {
   const { t, lang, getCategoryName, getConditionName } = useI18n();
 
@@ -86,7 +88,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setSize('');
       setColor('');
       setCondition('very_good');
-      setStorageLocation(allLocations[0] || 'صندوق A1');
+      setStorageLocation(initialLocation || allLocations[0] || 'صندوق A1');
       setNotes('');
       setPurchasePrice(5);
       setPurchaseDate(new Date().toISOString().slice(0, 10));
@@ -134,9 +136,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     const parsedCost = typeof purchasePrice === 'number' ? purchasePrice : parseFloat(purchasePrice) || 0;
     const parsedTarget = typeof targetPrice === 'number' ? targetPrice : parseFloat(targetPrice) || 0;
 
+    // Sanitize SKU from invisible characters, RTL/LTR marks, and trim
+    const cleanSkuValue = (sku.trim() || suggestedSku)
+      .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\r\n\t]/g, '')
+      .trim();
+
     onSave({
       id: productToEdit?.id,
-      sku: sku.trim() || suggestedSku,
+      sku: cleanSkuValue,
       title: title.trim(),
       brand: brand.trim(),
       category,
@@ -247,17 +254,25 @@ export const ProductModal: React.FC<ProductModalProps> = ({
           {/* Section 2: Essential Info (SKU, Title, Brand) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t.productSkuLabel}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {t.productSkuLabel}
+                </label>
+                <span className="text-3xs text-slate-400 font-normal">
+                  {lang === 'fr' ? 'Code SKU unique' : 'رمز التتبع بالمخزن'}
+                </span>
+              </div>
               <input
                 type="text"
                 required
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
-                placeholder="VIN-101"
+                placeholder="VIN-1"
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs font-bold text-slate-800 focus:border-teal-500 focus:outline-hidden"
               />
+              <span className="text-3xs text-slate-400 mt-1 block">
+                {lang === 'fr' ? 'VIN = Vinted Item. Modifiable à volonté.' : 'VIN تعني Vinted. يمكنك كتابة أي كود يناسبك.'}
+              </span>
             </div>
 
             <div className="sm:col-span-2">

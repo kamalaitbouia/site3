@@ -263,6 +263,38 @@ export interface Translations {
   noMatchingBoxes: string;
   noMatchingBoxesDesc: string;
 
+  // Storage Boxes Management additions
+  addStorageBoxBtn: string;
+  newStorageBoxTitle: string;
+  editStorageBoxTitle: string;
+  boxNameLabel: string;
+  boxNamePlaceholder: string;
+  boxZoneLabel: string;
+  boxZonePlaceholder: string;
+  boxColorLabel: string;
+  boxCapacityLabel: string;
+  boxNotesLabel: string;
+  boxNotesPlaceholder: string;
+  saveBoxBtn: string;
+  updateBoxBtn: string;
+  deleteBoxBtn: string;
+  deleteBoxConfirm: string;
+  boxHasItemsWarning: string;
+  updateLinkedProducts: string;
+  emptyBoxBadge: string;
+  emptyBoxDesc: string;
+  filterAllBoxes: string;
+  filterOccupiedBoxes: string;
+  filterEmptyBoxes: string;
+  totalBoxesCount: string;
+  totalItemsInBoxes: string;
+  totalCapitalInBoxes: string;
+  potentialProfitInBoxes: string;
+  printBoxLabelBtn: string;
+  boxLabelSubtitle: string;
+  boxCapacityFullness: string;
+  boxFullWarning: string;
+
   // Vinted Generator additions
   vintedGeneratorTitle: string;
   vintedGeneratorDesc: string;
@@ -339,8 +371,8 @@ export interface Translations {
 
 export const TRANSLATIONS: Record<Language, Translations> = {
   ar: {
-    appName: 'مخزوني',
-    appBadge: 'Vinted Resale Pro',
+    appName: 'مخزون فينتد',
+    appBadge: 'Vinted Pro',
     appDescription: 'إدارة المخزون، مواقع الصناديق، وحساب الأرباح الصافية',
 
     navInventory: 'المخزون والمنتجات',
@@ -587,6 +619,38 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     noMatchingBoxes: 'لم يتم العثور على أي صندوق مطابق',
     noMatchingBoxesDesc: 'جرب البحث باسم آخر، أو حدد صندوقاً جديداً عند إضافة منتج للمخزن.',
 
+    // Storage Boxes Management additions
+    addStorageBoxBtn: 'إضافة صندوق / رف جديد',
+    newStorageBoxTitle: 'إضافة صندوق أو رف تخزين جديد',
+    editStorageBoxTitle: 'تعديل بيانات الصندوق أو الرف',
+    boxNameLabel: 'اسم الصندوق أو الرف',
+    boxNamePlaceholder: 'مثال: صندوق A4، رف الأحذية 2، شماعة 3...',
+    boxZoneLabel: 'منطقة أو غرفة التخزين',
+    boxZonePlaceholder: 'مثال: غرفة المخزن، الرف العلوي، المرآب...',
+    boxColorLabel: 'لون التمييز البصري',
+    boxCapacityLabel: 'السعة الاستيعابية القصوى (عدد القطع - اختياري)',
+    boxNotesLabel: 'ملاحظات أو نوع البضاعة بالداخل',
+    boxNotesPlaceholder: 'مثال: مخصص للسترات الشتوية، إكسسوارات، أحذية رياضية...',
+    saveBoxBtn: 'حفظ الصندوق',
+    updateBoxBtn: 'تحديث البيانات',
+    deleteBoxBtn: 'حذف الصندوق',
+    deleteBoxConfirm: 'هل أنت متأكد من رغبتك في حذف هذا الصندوق نهائياً؟',
+    boxHasItemsWarning: 'تنبيه: هذا الصندوق يحتوي على قطع مخزنة! يرجى نقل القطع لصندوق آخر أو إعادة تسمية الصندوق.',
+    updateLinkedProducts: 'تحديث موقع جميع المنتجات الموجودة في هذا الصندوق تلقائياً بالاسم الجديد',
+    emptyBoxBadge: 'صندوق فارغ',
+    emptyBoxDesc: 'جاهز لاستقبال بضاعة جديدة',
+    filterAllBoxes: 'جميع الصناديق والأرفف',
+    filterOccupiedBoxes: 'صناديق بها بضاعة',
+    filterEmptyBoxes: 'صناديق فارغة جاهزة',
+    totalBoxesCount: 'إجمالي الصناديق',
+    totalItemsInBoxes: 'إجمالي القطع المخزنة',
+    totalCapitalInBoxes: 'رأس المال المخزن',
+    potentialProfitInBoxes: 'الأرباح المتوقعة بالصناديق',
+    printBoxLabelBtn: 'طباعة ملصق الباركود للصندوق',
+    boxLabelSubtitle: 'ملصق تنظيمي للصندوق الفعلي في غرفتك',
+    boxCapacityFullness: 'نسبة الامتلاء',
+    boxFullWarning: 'الصندوق ممتلئ تقريباً!',
+
     // Vinted Generator additions
     vintedGeneratorTitle: 'توليد إعلان Vinted احترافي بالذكاء الاصطناعي',
     vintedGeneratorDesc: 'عنوان جذاب، ووصف منسق مع الهاشتاغات باللغة الفرنسية لزيادة سرعة البيع!',
@@ -662,8 +726,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
   },
 
   fr: {
-    appName: 'MonStock',
-    appBadge: 'Vinted Resale Pro',
+    appName: 'Stock Vinted',
+    appBadge: 'Vinted Pro',
     appDescription: 'Gestion d\'inventaire, boîtes de stockage et calcul de rentabilité nette',
 
     navInventory: 'Inventaire & Articles',
@@ -909,6 +973,38 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     addToThisBox: 'Ajouter un article dans cette boîte',
     noMatchingBoxes: 'Aucune boîte correspondante trouvée',
     noMatchingBoxesDesc: 'Essayez un autre mot-clé ou attribuez une nouvelle boîte lors de l\'ajout d\'un article.',
+
+    // Storage Boxes Management additions
+    addStorageBoxBtn: 'Ajouter une boîte / étagère',
+    newStorageBoxTitle: 'Ajouter une nouvelle boîte de stockage',
+    editStorageBoxTitle: 'Modifier l\'emplacement de stockage',
+    boxNameLabel: 'Nom de la boîte ou de l\'étagère',
+    boxNamePlaceholder: 'Ex: Boîte A4, Étagère 2, Penderie 3...',
+    boxZoneLabel: 'Zone ou pièce de stockage',
+    boxZonePlaceholder: 'Ex: Pièce de stockage, Étagère haute, Garage...',
+    boxColorLabel: 'Couleur de repérage visuel',
+    boxCapacityLabel: 'Capacité maximale (nb d\'articles - optionnel)',
+    boxNotesLabel: 'Notes ou type d\'articles',
+    boxNotesPlaceholder: 'Ex: Vestes d\'hiver, baskets nettoyées, accessoires...',
+    saveBoxBtn: 'Enregistrer l\'emplacement',
+    updateBoxBtn: 'Mettre à jour',
+    deleteBoxBtn: 'Supprimer l\'emplacement',
+    deleteBoxConfirm: 'Voulez-vous vraiment supprimer cet emplacement ?',
+    boxHasItemsWarning: 'Attention : Cette boîte contient des articles ! Veuillez d\'abord déplacer les articles ou renommer la boîte.',
+    updateLinkedProducts: 'Mettre à jour automatiquement les articles associés avec le nouveau nom',
+    emptyBoxBadge: 'Boîte vide',
+    emptyBoxDesc: 'Prête à accueillir du nouveau stock',
+    filterAllBoxes: 'Toutes les boîtes',
+    filterOccupiedBoxes: 'Avec stock',
+    filterEmptyBoxes: 'Boîtes vides',
+    totalBoxesCount: 'Total boîtes',
+    totalItemsInBoxes: 'Total articles stockés',
+    totalCapitalInBoxes: 'Capital en stock',
+    potentialProfitInBoxes: 'Bénéfice potentiel estimé',
+    printBoxLabelBtn: 'Imprimer code-barres de la boîte',
+    boxLabelSubtitle: 'Étiquette pour boîte physique',
+    boxCapacityFullness: 'Remplissage',
+    boxFullWarning: 'Boîte presque pleine !',
 
     // Vinted Generator additions
     vintedGeneratorTitle: 'Générateur d\'annonce Vinted avec IA',

@@ -68,6 +68,16 @@ export interface Currency {
   nameAr: string;
 }
 
+export interface StorageBox {
+  id: string;
+  name: string; // e.g. "صندوق A1", "الرف 1"
+  zone?: string; // e.g. "غرفة المخزن", "الرف العلوي", "المرآب"
+  color?: string; // e.g. 'amber', 'teal', 'indigo', 'emerald', 'rose', 'blue', 'purple', 'slate'
+  capacity?: number; // max capacity (number of items)
+  notes?: string;
+  createdAt: string;
+}
+
 export interface ResellerStats {
   totalInventoryCost: number; // رأس المال المجمد في المخزن
   totalExpectedRevenue: number; // القيمة المتوقعة للمخزون

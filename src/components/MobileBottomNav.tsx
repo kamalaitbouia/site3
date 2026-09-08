@@ -20,8 +20,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const { t } = useI18n();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-3 pb-safe shadow-lg">
-      <div className="flex items-center justify-around">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-3 pb-safe shadow-lg overflow-visible">
+      <div className="flex items-center justify-around overflow-visible">
         {/* Inventory tab */}
         <button
           onClick={() => onSelectTab('inventory')}
@@ -51,15 +51,20 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <span className="text-3xs mt-1">{t.mobileStorage}</span>
         </button>
 
-        {/* Center Prominent Add Button */}
-        <button
-          id="mobile-add-btn"
-          onClick={onOpenAddModal}
-          className="w-12 h-12 -mt-5 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30 hover:scale-105 active:scale-95 transition"
-          title={t.mobileAdd}
-        >
-          <Plus className="w-6 h-6 stroke-3" />
-        </button>
+        {/* Center Prominent Add Button - fully visible, never clipped */}
+        <div className="relative -top-4.5 flex flex-col items-center shrink-0">
+          <button
+            id="mobile-add-btn"
+            onClick={onOpenAddModal}
+            className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/40 ring-4 ring-white active:scale-95 transition cursor-pointer"
+            title={t.mobileAdd}
+          >
+            <Plus className="w-6 h-6 stroke-3" />
+          </button>
+          <span className="text-3xs font-bold text-teal-700 mt-0.5">
+            {t.mobileAdd}
+          </span>
+        </div>
 
         {/* Barcode Scanner Button */}
         <button

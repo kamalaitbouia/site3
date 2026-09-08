@@ -59,29 +59,29 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       {/* 2. Capital in Storage (Tied Cost) */}
       <div 
         onClick={() => onFilterStatus?.('in_storage')}
-        className={`p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
+        className={`p-3 sm:p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
           activeStatusFilter === 'in_storage'
             ? 'border-amber-500 ring-2 ring-amber-100 shadow-sm'
             : 'border-slate-200/80 hover:border-amber-300 hover:shadow-xs'
         }`}
       >
-        <div className="flex items-center justify-between text-slate-500 mb-2">
-          <span className="text-xs sm:text-sm font-medium">{t.statCapitalStorage}</span>
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div className="flex items-center justify-between text-slate-500 mb-1.5">
+          <span className="text-xs sm:text-sm font-bold text-slate-700 truncate">{t.statCapitalStorage}</span>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Archive className="w-4 h-4" />
           </div>
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-xl sm:text-2xl font-bold text-slate-800">
+          <span className="text-lg sm:text-2xl font-black text-slate-800">
             {stats.totalInventoryCost.toFixed(1)}
           </span>
           <span className="text-xs sm:text-sm font-semibold text-slate-500">
             {currency.symbol}
           </span>
         </div>
-        <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-          <span className="truncate">{t.statCapitalStorageDesc}</span>
-          <span className="font-medium text-amber-700 whitespace-nowrap">
+        <div className="mt-1.5 flex items-center justify-between text-3xs sm:text-xs text-slate-500 gap-1">
+          <span className="truncate">{lang === 'fr' ? 'Au stock' : 'رأس مال مجمد'}</span>
+          <span className="font-bold text-amber-700 whitespace-nowrap shrink-0">
             {stats.inStorageCount} {t.statReadyInStorage}
           </span>
         </div>
@@ -90,32 +90,32 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       {/* 3. Expected Revenue & Potential Profit */}
       <div 
         onClick={() => onFilterStatus?.('listed')}
-        className={`p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
+        className={`p-3 sm:p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
           activeStatusFilter === 'listed'
             ? 'border-teal-500 ring-2 ring-teal-100 shadow-sm'
             : 'border-slate-200/80 hover:border-teal-300 hover:shadow-xs'
         }`}
       >
-        <div className="flex items-center justify-between text-slate-500 mb-2">
-          <span className="text-xs sm:text-sm font-medium">{t.statPotentialProfit}</span>
-          <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+        <div className="flex items-center justify-between text-slate-500 mb-1.5">
+          <span className="text-xs sm:text-sm font-bold text-slate-700 truncate">{t.statPotentialProfit}</span>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
             <DollarSign className="w-4 h-4" />
           </div>
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-xl sm:text-2xl font-bold text-teal-600">
+          <span className="text-lg sm:text-2xl font-black text-teal-600">
             +{stats.totalPotentialProfit.toFixed(1)}
           </span>
           <span className="text-xs sm:text-sm font-semibold text-teal-600/80">
             {currency.symbol}
           </span>
         </div>
-        <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-          <span>
-            {t.statPotentialRevenue}: {stats.totalExpectedRevenue.toFixed(0)} {currency.symbol}
+        <div className="mt-1.5 flex items-center justify-between text-3xs sm:text-xs text-slate-500 gap-1">
+          <span className="truncate">
+            {stats.totalExpectedRevenue.toFixed(0)} {currency.symbol} {lang === 'fr' ? 'brut' : 'إجمالي'}
           </span>
-          <span className="font-medium text-teal-700">
-            {stats.listedCount} {lang === 'fr' ? 'en vente' : 'معروضة'}
+          <span className="font-bold text-teal-700 whitespace-nowrap shrink-0">
+            {stats.listedCount} {lang === 'fr' ? 'en vente' : 'معروض'}
           </span>
         </div>
       </div>

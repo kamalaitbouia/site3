@@ -8,13 +8,15 @@ import {
   Search, 
   X 
 } from 'lucide-react';
-import { Product, Currency, Category, SaleDetails } from './types';
+import { Product, Currency, Category, SaleDetails, StorageBox } from './types';
 import { CURRENCIES, CATEGORIES } from './lib/constants';
 import { 
   getStoredProducts, 
   saveStoredProducts, 
   getStoredCurrency, 
   saveStoredCurrency, 
+  getStoredBoxes,
+  saveStoredBoxes,
   calculateStats, 
   generateNextSku, 
   INITIAL_PRODUCTS 
@@ -23,11 +25,13 @@ import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { StatsCards } from './components/StatsCards';
 import { ProductCard } from './components/ProductCard';
+import { ProductDetailsModal } from './components/ProductDetailsModal';
 import { ProductModal } from './components/ProductModal';
 import { SellModal } from './components/SellModal';
 import { PrintLabelsModal } from './components/PrintLabelsModal';
 import { ExportImportModal } from './components/ExportImportModal';
 import { StorageLocationsView } from './components/StorageLocationsView';
+import { StorageBoxModal } from './components/StorageBoxModal';
 import { ProfitAnalytics } from './components/ProfitAnalytics';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { VintedListingModal } from './components/VintedListingModal';
@@ -38,6 +42,7 @@ export default function App() {
   const { t, lang, getCategoryName } = useI18n();
 
   const [products, setProducts] = useState<Product[]>(() => getStoredProducts());
+  const [storageBoxes, setStorageBoxes] = useState<StorageBox[]>(() => getStoredBoxes());
   const [currentCurrency, setCurrentCurrency] = useState<Currency>(() => {
     const code = getStoredCurrency();
     return CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
@@ -55,6 +60,7 @@ export default function App() {
   // Modals state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [initialLocationForNewProduct, setInitialLocationForNewProduct] = useState<string | undefined>();
 
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [productToSell, setProductToSell] = useState<Product | null>(null);
@@ -68,10 +74,32 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
 
+  // Storage Box Modal state
+  const [isBoxModalOpen, setIsBoxModalOpen] = useState(false);
+  const [boxToEdit, setBoxToEdit] = useState<StorageBox | null>(null);
+
+  // Dedicated Product Details Modal state
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [productForDetails, setProductForDetails] = useState<Product | null>(null);
+
   // Sync to storage
   useEffect(() => {
     saveStoredProducts(products);
   }, [products]);
+
+  // Keep state in sync if modified in another window / tab
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'makhzooni_products_v1') {
+        setProducts(getStoredProducts());
+      }
+      if (e.key === 'makhzooni_storage_boxes_v2') {
+        setStorageBoxes(getStoredBoxes());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleSelectCurrency = (currency: Currency) => {
     setCurrentCurrency(currency);
@@ -83,9 +111,10 @@ export default function App() {
 
   // Unique storage locations for autocomplete & filters
   const existingLocations = useMemo(() => {
-    const locs = products.map((p) => p.storageLocation?.trim()).filter(Boolean);
-    return Array.from(new Set(locs));
-  }, [products]);
+    const definedNames = storageBoxes.map((b) => b.name?.trim()).filter(Boolean);
+    const productNames = products.map((p) => p.storageLocation?.trim()).filter(Boolean);
+    return Array.from(new Set([...definedNames, ...productNames]));
+  }, [storageBoxes, products]);
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
@@ -253,6 +282,12 @@ export default function App() {
     setIsLabelModalOpen(true);
   };
 
+  // Open Full Product Details Modal
+  const handleOpenDetails = (product: Product) => {
+    setProductForDetails(product);
+    setIsDetailsModalOpen(true);
+  };
+
   // Quick Location Update from Scanner
   const handleUpdateProductLocation = (productId: string, newLocation: string) => {
     setProducts((prev) =>
@@ -266,6 +301,9 @@ export default function App() {
           : p
       )
     );
+    if (productForDetails && productForDetails.id === productId) {
+      setProductForDetails((prev) => prev ? { ...prev, storageLocation: newLocation } : null);
+    }
   };
 
   // Quick Status Update from Scanner
@@ -281,6 +319,9 @@ export default function App() {
           : p
       )
     );
+    if (productForDetails && productForDetails.id === productId) {
+      setProductForDetails((prev) => prev ? { ...prev, status: newStatus } : null);
+    }
   };
 
   // Trigger Vinted Listing Generator
@@ -305,8 +346,39 @@ export default function App() {
     setCurrentTab('inventory');
   };
 
+  // Storage Box Management
+  const handleSaveBox = (box: StorageBox, updateLinkedProducts: boolean, oldName?: string) => {
+    let nextBoxes: StorageBox[];
+    const exists = storageBoxes.some((b) => b.id === box.id);
+    if (exists) {
+      nextBoxes = storageBoxes.map((b) => (b.id === box.id ? box : b));
+    } else {
+      nextBoxes = [...storageBoxes, box];
+    }
+    setStorageBoxes(nextBoxes);
+    saveStoredBoxes(nextBoxes);
+
+    // If renamed and user wanted to update linked products:
+    if (updateLinkedProducts && oldName && oldName.trim().toLowerCase() !== box.name.trim().toLowerCase()) {
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.storageLocation?.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+            return { ...p, storageLocation: box.name, updatedAt: new Date().toISOString() };
+          }
+          return p;
+        })
+      );
+    }
+  };
+
+  const handleDeleteBox = (boxId: string, boxName: string) => {
+    const nextBoxes = storageBoxes.filter((b) => b.id !== boxId);
+    setStorageBoxes(nextBoxes);
+    saveStoredBoxes(nextBoxes);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20 md:pb-12 flex flex-col selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-32 md:pb-12 flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}
@@ -356,8 +428,18 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Scan Barcode / SKU Button & Sort dropdown */}
-                <div className="flex items-center gap-2">
+                {/* Actions: Add Product, Scan Barcode, Sort */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Add Product Button */}
+                  <button
+                    id="inventory-add-product-btn"
+                    onClick={() => handleOpenAdd()}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs hover:shadow transition shrink-0 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t.navAddProduct}</span>
+                  </button>
+
                   <button
                     id="filter-bar-scan-btn"
                     onClick={() => setIsScannerModalOpen(true)}
@@ -500,21 +582,15 @@ export default function App() {
               )}
             </div>
 
-            {/* Products Grid */}
+            {/* Products Grid - Clean, Compact & Square Visual Cards */}
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
                     currency={currentCurrency}
-                    onEdit={handleEditProduct}
-                    onDuplicate={handleDuplicateProduct}
-                    onDelete={handleDeleteProduct}
-                    onMarkAsSold={handleMarkAsSold}
-                    onToggleStatus={handleToggleStatus}
-                    onPrintLabel={handlePrintLabel}
-                    onGenerateListing={handleGenerateListing}
+                    onClick={handleOpenDetails}
                   />
                 ))}
               </div>
@@ -547,11 +623,22 @@ export default function App() {
           <StorageLocationsView
             products={products}
             currency={currentCurrency}
+            storageBoxes={storageBoxes}
             onSelectLocationFilter={handleSelectLocationFromStorageView}
             onAddNewProductToLocation={(loc) => {
+              setInitialLocationForNewProduct(loc);
               setProductToEdit(null);
               setIsProductModalOpen(true);
             }}
+            onOpenAddBoxModal={() => {
+              setBoxToEdit(null);
+              setIsBoxModalOpen(true);
+            }}
+            onOpenEditBoxModal={(box) => {
+              setBoxToEdit(box);
+              setIsBoxModalOpen(true);
+            }}
+            onDeleteBox={handleDeleteBox}
           />
         )}
 
@@ -581,12 +668,56 @@ export default function App() {
       {/* Add / Edit Product Modal */}
       <ProductModal
         isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
+        onClose={() => {
+          setIsProductModalOpen(false);
+          setInitialLocationForNewProduct(undefined);
+        }}
         onSave={handleSaveProduct}
         productToEdit={productToEdit}
         suggestedSku={generateNextSku(products)}
         currency={currentCurrency}
         existingLocations={existingLocations}
+        initialLocation={initialLocationForNewProduct}
+      />
+
+      {/* Product Details & Actions Popup Modal */}
+      <ProductDetailsModal
+        isOpen={isDetailsModalOpen}
+        product={productForDetails}
+        currency={currentCurrency}
+        onClose={() => setIsDetailsModalOpen(false)}
+        onEdit={(prod) => {
+          setIsDetailsModalOpen(false);
+          handleEditProduct(prod);
+        }}
+        onDuplicate={(prod) => {
+          setIsDetailsModalOpen(false);
+          handleDuplicateProduct(prod);
+        }}
+        onDelete={(id) => {
+          setIsDetailsModalOpen(false);
+          handleDeleteProduct(id);
+        }}
+        onMarkAsSold={(prod) => {
+          setIsDetailsModalOpen(false);
+          handleMarkAsSold(prod);
+        }}
+        onToggleStatus={(prod) => {
+          handleToggleStatus(prod);
+          setProductForDetails((prev) => prev && prev.id === prod.id ? {
+            ...prev,
+            status: prev.status === 'listed' ? 'in_storage' : 'listed'
+          } : null);
+        }}
+        onPrintLabel={(prod) => {
+          setIsDetailsModalOpen(false);
+          handlePrintLabel(prod);
+        }}
+        onGenerateListing={(prod) => {
+          setIsDetailsModalOpen(false);
+          handleGenerateListing(prod);
+        }}
+        onUpdateLocation={handleUpdateProductLocation}
       />
 
       {/* Quick Sell Modal */}
@@ -629,6 +760,28 @@ export default function App() {
           setIsScannerModalOpen(false);
           handleOpenAdd(undefined, sku);
         }}
+      />
+
+      {/* Storage Box Add / Edit Modal */}
+      <StorageBoxModal
+        isOpen={isBoxModalOpen}
+        onClose={() => {
+          setIsBoxModalOpen(false);
+          setBoxToEdit(null);
+        }}
+        onSave={handleSaveBox}
+        onDelete={handleDeleteBox}
+        boxToEdit={boxToEdit}
+        itemsCountInBox={
+          boxToEdit
+            ? products.filter(
+                (p) =>
+                  (p.storageLocation?.trim().toLowerCase() === boxToEdit.name.toLowerCase()) &&
+                  (p.status === 'in_storage' || p.status === 'listed')
+              ).length
+            : 0
+        }
+        existingBoxes={storageBoxes}
       />
 
       {/* Export / Backup Modal */}

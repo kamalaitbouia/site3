@@ -1,7 +1,47 @@
-import { Product, ResellerStats, SaleDetails } from '../types';
+import { Product, ResellerStats, SaleDetails, StorageBox } from '../types';
 
 const STORAGE_KEY = 'makhzooni_products_v1';
 const CURRENCY_KEY = 'makhzooni_currency_v1';
+const STORAGE_BOXES_KEY = 'makhzooni_storage_boxes_v2';
+
+export const DEFAULT_STORAGE_BOXES: StorageBox[] = [
+  {
+    id: 'box-1',
+    name: 'صندوق A1',
+    zone: 'الرف العلوي',
+    color: 'amber',
+    capacity: 20,
+    notes: 'ملابس خفيفة وإكسسوارات معروضة للبيع',
+    createdAt: '2025-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'box-2',
+    name: 'صندوق B2',
+    zone: 'الرف الأوسط',
+    color: 'teal',
+    capacity: 12,
+    notes: 'أحذية وسنيكرز تم تنظيفها',
+    createdAt: '2025-01-02T00:00:00.000Z',
+  },
+  {
+    id: 'box-3',
+    name: 'شماعة الملابس 1',
+    zone: 'ركن الشماعات',
+    color: 'indigo',
+    capacity: 25,
+    notes: 'قمصان وجاكيتات معلقة وجاهزة للشحن',
+    createdAt: '2025-01-03T00:00:00.000Z',
+  },
+  {
+    id: 'box-4',
+    name: 'صندوق C3',
+    zone: 'الرف السفلي',
+    color: 'emerald',
+    capacity: 15,
+    notes: 'حقائب وشنط جلدية وكروس بودي',
+    createdAt: '2025-01-04T00:00:00.000Z',
+  },
+];
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
@@ -191,15 +231,49 @@ export function saveStoredCurrency(currencyCode: string): void {
   }
 }
 
+export function getStoredBoxes(): StorageBox[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_BOXES_KEY);
+    if (!raw) {
+      localStorage.setItem(STORAGE_BOXES_KEY, JSON.stringify(DEFAULT_STORAGE_BOXES));
+      return DEFAULT_STORAGE_BOXES;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : DEFAULT_STORAGE_BOXES;
+  } catch (err) {
+    console.error('Error reading stored boxes:', err);
+    return DEFAULT_STORAGE_BOXES;
+  }
+}
+
+export function saveStoredBoxes(boxes: StorageBox[]): void {
+  try {
+    localStorage.setItem(STORAGE_BOXES_KEY, JSON.stringify(boxes));
+  } catch (err) {
+    console.error('Error saving storage boxes:', err);
+  }
+}
+
 export function generateNextSku(products: Product[]): string {
-  let highest = 100;
+  let highest = 0;
+  let hasAnySku = false;
   for (const p of products) {
-    if (p.sku && p.sku.startsWith('VIN-')) {
-      const num = parseInt(p.sku.replace('VIN-', ''), 10);
-      if (!isNaN(num) && num > highest) {
-        highest = num;
+    if (p.sku) {
+      const cleaned = p.sku.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\r\n\t]/g, '').trim();
+      const match = cleaned.match(/^([a-zA-Z_-]*?)0*(\d+)$/);
+      if (match) {
+        const num = parseInt(match[2], 10);
+        if (!isNaN(num)) {
+          hasAnySku = true;
+          if (num > highest) {
+            highest = num;
+          }
+        }
       }
     }
+  }
+  if (!hasAnySku || highest === 0) {
+    return 'VIN-1';
   }
   return `VIN-${highest + 1}`;
 }
