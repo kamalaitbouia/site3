@@ -24,19 +24,29 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
-import { Product, Currency } from '../types';
+import { Product, Currency, StorageBox } from '../types';
 import { useI18n } from '../lib/i18n';
-import { getStoredProducts } from '../lib/storage';
+import { getStoredProducts, getStoredBoxes } from '../lib/storage';
 
-// Clean all invisible chars, RTL/LTR marks, zero-width chars, spaces
-export function cleanSku(val: string): string {
-  if (!val) return '';
-  return val
-    .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\r\n\t]/g, '')
-    .trim();
+// Convert Arabic-Indic (٠-٩) and Eastern Arabic (۰-۹) digits to standard ASCII digits (0-9)
+export function normalizeDigits(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/[٠-٩]/g, (d) => (d.charCodeAt(0) - 1632).toString())
+    .replace(/[۰-۹]/g, (d) => (d.charCodeAt(0) - 1776).toString());
 }
 
-// Alphanumeric lowercase only (e.g. "VIN-1" -> "vin1", "VIN - 001" -> "vin001")
+// Clean all invisible chars, RTL/LTR marks, zero-width chars, spaces, and normalize dashes/digits
+export function cleanSku(val: string): string {
+  if (!val) return '';
+  const noInvisible = val
+    .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\u202F\u2060\r\n\t]/g, '')
+    .replace(/[–—−־ـ]/g, '-')
+    .trim();
+  return normalizeDigits(noInvisible);
+}
+
+// Alphanumeric lowercase only (e.g. "VIN-1" -> "vin1", "VIN - 001" -> "vin001", "VIN-١" -> "vin1")
 export function toAlphaNum(val: string): string {
   return cleanSku(val).toLowerCase().replace(/[^a-z0-9]/gi, '');
 }
@@ -51,7 +61,7 @@ export function parseSkuParts(val: string): { prefix: string; num: number | null
       num: parseInt(match[2], 10),
     };
   }
-  return { prefix: cleaned, num: null };
+  return { prefix: cleaned.replace(/[^a-z0-9]/gi, ''), num: null };
 }
 
 export function matchProductByCode(productsList: Product[], rawScanned: string): Product | null {
@@ -69,7 +79,7 @@ export function matchProductByCode(productsList: Product[], rawScanned: string):
     if (p.id.toLowerCase() === scannedLower) return p;
   }
 
-  // Level 2: Alphanumeric match (ignoring dashes, spaces, underscores: e.g. "VIN-1" === "vin1" === "VIN 1")
+  // Level 2: Alphanumeric match (ignoring dashes, spaces, underscores: e.g. "VIN-1" === "vin1" === "VIN 1" === "VIN-١")
   if (scannedAlpha.length > 0) {
     for (const p of productsList) {
       const pAlpha = toAlphaNum(p.sku);
@@ -77,17 +87,25 @@ export function matchProductByCode(productsList: Product[], rawScanned: string):
     }
   }
 
-  // Level 3: Numeric suffix match with identical prefix (e.g. "VIN-1" matches "VIN-01" or "VIN-001")
+  // Level 3: Numeric suffix match (e.g. "VIN-1" matches "VIN-01" or "VIN-001")
   if (scannedParts.num !== null) {
     for (const p of productsList) {
       const pParts = parseSkuParts(p.sku);
-      if (pParts.num === scannedParts.num && pParts.prefix === scannedParts.prefix) {
+      if (pParts.num === scannedParts.num && (pParts.prefix === scannedParts.prefix || !scannedParts.prefix || !pParts.prefix)) {
         return p;
       }
     }
   }
 
-  // Level 4: Title match fallback (if scanned code is at least 3 chars)
+  // Level 4: Substring SKU match (e.g. if code is part of SKU or SKU is part of code)
+  for (const p of productsList) {
+    const pSku = cleanSku(p.sku).toLowerCase();
+    if (pSku && (pSku.includes(scannedLower) || scannedLower.includes(pSku))) {
+      return p;
+    }
+  }
+
+  // Level 5: Title match fallback (if scanned code is at least 3 chars)
   if (scannedLower.length >= 3) {
     for (const p of productsList) {
       if (p.title.toLowerCase().includes(scannedLower)) {
@@ -146,9 +164,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   // Keep a reference to the latest products array and handleCodeScanned to prevent stale closures
   const productsRef = useRef(products);
-  useEffect(() => {
-    productsRef.current = products;
-  }, [products]);
+  productsRef.current = products;
 
   const handleCodeScannedRef = useRef<(raw: string) => void>(() => {});
 
@@ -156,6 +172,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const [manualInput, setManualInput] = useState('');
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [matchedProduct, setMatchedProduct] = useState<Product | null>(null);
+  const [matchedBox, setMatchedBox] = useState<{ box: StorageBox, products: Product[] } | null>(null);
   const [newLocationInput, setNewLocationInput] = useState('');
   const [showLocationSaved, setShowLocationSaved] = useState(false);
 
@@ -377,6 +394,29 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     setScanSuccessFlash(true);
     setTimeout(() => setScanSuccessFlash(false), 1200);
     playBeep();
+
+    setMatchedProduct(null);
+    setMatchedBox(null);
+
+    // Check if it's a Box Barcode (BOX-[id])
+    if (clean.toUpperCase().startsWith('BOX-')) {
+      const boxId = clean.substring(4);
+      let boxes = getStoredBoxes();
+      let foundBox = boxes.find(b => b.id.toLowerCase() === boxId.toLowerCase() || b.name.replace(/\s+/g, '-').toLowerCase() === boxId.toLowerCase());
+      
+      // Also try fallback to the raw box name in case the ID matched the name format
+      if (!foundBox) {
+         foundBox = boxes.find(b => b.id === clean || b.id.toLowerCase() === clean.toLowerCase());
+      }
+
+      if (foundBox) {
+        // Find products in this box
+        const productsInBox = productsRef.current.filter(p => p.storageLocation === foundBox.name);
+        setMatchedBox({ box: foundBox, products: productsInBox });
+        setIsResultPopupOpen(true);
+        return;
+      }
+    }
 
     // 1. Primary search against current live state using ref to avoid stale closures
     let found = matchProductByCode(productsRef.current, clean);
@@ -1028,30 +1068,34 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       </div>
 
       {/* POPUP MODAL ON BARCODE SCAN (APPEARS FRONT-AND-CENTER WITHOUT ANY SCROLLING) */}
-      {isResultPopupOpen && (matchedProduct || scannedCode) && (
+      {isResultPopupOpen && (matchedProduct || matchedBox || scannedCode) && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
             
             {/* Popup Header */}
             <div className={`px-5 py-4 border-b flex items-center justify-between ${
-              matchedProduct 
+              matchedBox
+                ? 'bg-indigo-50/90 border-indigo-100 text-indigo-900'
+                : matchedProduct 
                 ? 'bg-teal-50/90 border-teal-100 text-teal-900' 
                 : 'bg-amber-50/90 border-amber-100 text-amber-950'
             }`}>
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold ${
-                  matchedProduct ? 'bg-teal-600 text-white' : 'bg-amber-500 text-white'
+                  matchedBox ? 'bg-indigo-600 text-white' : matchedProduct ? 'bg-teal-600 text-white' : 'bg-amber-500 text-white'
                 }`}>
-                  {matchedProduct ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  {matchedBox ? <Archive className="w-5 h-5" /> : matchedProduct ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-base font-black">
-                    {matchedProduct
+                    {matchedBox
+                      ? (lang === 'fr' ? 'Boîte trouvée !' : 'تم العثور على الصندوق!')
+                      : matchedProduct
                       ? (lang === 'fr' ? 'Article détecté avec succès !' : 'تم العثور على المنتج بنجاح!')
                       : (lang === 'fr' ? 'Nouveau code détecté !' : 'تم التقاط الرمز بنجاح!')}
                   </h3>
                   <span className="font-mono text-2xs font-bold px-2 py-0.5 rounded-md bg-white/80 border border-slate-200/60 inline-block mt-0.5">
-                    SKU: {matchedProduct ? matchedProduct.sku : scannedCode}
+                    {matchedBox ? 'BOX: ' + matchedBox.box.name : 'SKU: ' + (matchedProduct ? matchedProduct.sku : scannedCode)}
                   </span>
                 </div>
               </div>
@@ -1068,7 +1112,80 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
             {/* Popup Body */}
             <div className="p-5 overflow-y-auto space-y-4">
-              {matchedProduct ? (
+              {matchedBox ? (
+                /* MATCHED BOX UI */
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row gap-4 items-start bg-slate-50 border border-slate-100 p-4 rounded-2xl shadow-xs relative overflow-hidden">
+                    <div className="flex-1 min-w-0 z-10 w-full">
+                      <div className="flex items-center gap-1.5 text-2xs font-bold text-slate-500 mb-1">
+                        <Archive className="w-3.5 h-3.5" />
+                        <span>{lang === 'fr' ? 'Détails de la boîte' : 'تفاصيل الصندوق'}</span>
+                      </div>
+                      <h4 className="text-xl font-black text-slate-900 mb-2 truncate">
+                        {matchedBox.box.name}
+                      </h4>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md font-bold">
+                          {matchedBox.products.length} {lang === 'fr' ? 'articles' : 'قطع'}
+                        </span>
+                        {matchedBox.box.zone && (
+                          <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-md font-medium">
+                            {matchedBox.box.zone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List of Products inside Box */}
+                  <div>
+                    <h5 className="text-sm font-bold text-slate-800 mb-3 px-1">
+                      {lang === 'fr' ? 'Contenu de la boîte' : 'محتويات الصندوق'}
+                    </h5>
+                    {matchedBox.products.length > 0 ? (
+                      <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                        {matchedBox.products.map(p => (
+                          <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                            {p.images && p.images[0] ? (
+                              <img src={p.images[0]} alt="" className="w-12 h-12 rounded-lg object-cover bg-slate-100 border border-slate-100" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                <Package className="w-5 h-5" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <h6 className="font-bold text-slate-800 text-xs sm:text-sm truncate leading-tight">{p.title}</h6>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="font-mono text-3xs font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{p.sku}</span>
+                                <span className="text-xs font-black text-emerald-600">{p.targetPrice}{currency.symbol}</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => {
+                                  setIsResultPopupOpen(false);
+                                  stopCamera();
+                                  onClose();
+                                  onSelectProductToSell(p);
+                                }}
+                                className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg transition"
+                                title={lang === 'fr' ? 'Vendre' : 'بيع'}
+                              >
+                                <DollarSign className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+                        <Package className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-slate-600">{lang === 'fr' ? 'Boîte vide' : 'الصندوق فارغ'}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : matchedProduct ? (
                 <>
                   {/* Product Visual & Basic Info */}
                   <div className="flex gap-4 items-center bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
@@ -1251,6 +1368,58 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       {lang === 'fr' ? `Ajouter ce produit (${scannedCode})` : `تسجيل قطعة جديدة بالكود (${scannedCode})`}
                     </span>
                   </button>
+
+                  {/* Fast Link to existing products: user can immediately link with 1 click */}
+                  {products.length > 0 && (
+                    <div className="pt-3 border-t border-slate-100 text-right">
+                      <span className="text-xs font-bold text-slate-700 block mb-2">
+                        {lang === 'fr'
+                          ? 'Ou associer ce code à l\'un de vos produits :'
+                          : 'أو هل تقصد ربط هذا الباركود بإحدى قطعك المسجلة؟'}
+                      </span>
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 p-1 bg-slate-50/80 rounded-xl border border-slate-200">
+                        {products.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              // Link SKU directly and display product!
+                              p.sku = scannedCode || p.sku;
+                              setMatchedProduct(p);
+                              setNewLocationInput(p.storageLocation || '');
+                              setSelectedCalcProduct(p);
+                              setCalcTargetPrice(p.targetPrice);
+                              setCalcCostPrice(p.purchasePrice);
+                              setBuyerOffer(Math.round(p.targetPrice * 0.8));
+                            }}
+                            className="w-full p-2 rounded-lg bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-right transition cursor-pointer flex items-center justify-between gap-2 shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              {p.images && p.images[0] ? (
+                                <img src={p.images[0]} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-200" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                  <Package className="w-4 h-4 text-slate-400" />
+                                </div>
+                              )}
+                              <div className="min-w-0 text-right">
+                                <p className="text-xs font-bold text-slate-800 truncate">{p.title}</p>
+                                <span className="text-3xs text-amber-600 font-medium">{p.storageLocation || 'بدون صندوق'}</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end shrink-0">
+                              <span className="font-mono text-3xs font-black text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                                {p.sku}
+                              </span>
+                              <span className="text-3xs font-black text-emerald-600">
+                                {currency.symbol}{p.targetPrice}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

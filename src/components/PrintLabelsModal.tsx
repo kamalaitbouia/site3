@@ -3,6 +3,7 @@ import { Printer, X } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 import { Product, Currency } from '../types';
 import { useI18n } from '../lib/i18n';
+import { cleanSku } from './BarcodeScannerModal';
 
 interface PrintLabelsModalProps {
   isOpen: boolean;
@@ -23,7 +24,8 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
   useEffect(() => {
     if (isOpen && product?.sku && barcodeSvgRef.current) {
       try {
-        JsBarcode(barcodeSvgRef.current, product.sku, {
+        const barcodeText = cleanSku(product.sku) || product.sku;
+        JsBarcode(barcodeSvgRef.current, barcodeText, {
           format: 'CODE128',
           lineColor: '#0f172a',
           width: 2.2,

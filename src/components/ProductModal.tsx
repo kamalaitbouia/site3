@@ -136,10 +136,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     const parsedCost = typeof purchasePrice === 'number' ? purchasePrice : parseFloat(purchasePrice) || 0;
     const parsedTarget = typeof targetPrice === 'number' ? targetPrice : parseFloat(targetPrice) || 0;
 
-    // Sanitize SKU from invisible characters, RTL/LTR marks, and trim
+    // Sanitize SKU from invisible characters, RTL/LTR marks, and trim. Also force uppercase for new short hash pattern.
     const cleanSkuValue = (sku.trim() || suggestedSku)
       .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\r\n\t]/g, '')
-      .trim();
+      .trim()
+      .toUpperCase();
 
     onSave({
       id: productToEdit?.id,
@@ -267,11 +268,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 required
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
-                placeholder="VIN-1"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs font-bold text-slate-800 focus:border-teal-500 focus:outline-hidden"
+                placeholder="X7K2P"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs font-bold text-slate-800 focus:border-teal-500 focus:outline-hidden uppercase"
               />
               <span className="text-3xs text-slate-400 mt-1 block">
-                {lang === 'fr' ? 'VIN = Vinted Item. Modifiable à volonté.' : 'VIN تعني Vinted. يمكنك كتابة أي كود يناسبك.'}
+                {lang === 'fr' ? 'Code unique généré aléatoirement. Modifiable.' : 'كود عشوائي فريد. يمكنك تعديله إذا أردت.'}
               </span>
             </div>
 

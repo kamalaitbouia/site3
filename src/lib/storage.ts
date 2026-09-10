@@ -46,7 +46,7 @@ export const DEFAULT_STORAGE_BOXES: StorageBox[] = [
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-1',
-    sku: 'VIN-101',
+    sku: 'X7K2P',
     title: 'جاكيت جلد Vintage بني أصلي',
     brand: 'Zara',
     category: 'clothing',
@@ -67,7 +67,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-2',
-    sku: 'VIN-102',
+    sku: 'M4V9A',
     title: 'حذاء سنيكرز Air Force 1 أبيض',
     brand: 'Nike',
     category: 'shoes',
@@ -88,7 +88,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-3',
-    sku: 'VIN-103',
+    sku: '9F7D2',
     title: 'قميص كتان بيج كلاسيكي',
     brand: 'Massimo Dutti',
     category: 'clothing',
@@ -109,7 +109,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-4',
-    sku: 'VIN-104',
+    sku: 'W3P8K',
     title: 'حقيبة كتف جلد سوداء كروس بودي',
     brand: 'Michael Kors',
     category: 'bags',
@@ -140,7 +140,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-5',
-    sku: 'VIN-105',
+    sku: 'F4P7N',
     title: 'بنطلون جينز كلاسيك 501 أزرق مريح',
     brand: "Levi's",
     category: 'clothing',
@@ -255,27 +255,27 @@ export function saveStoredBoxes(boxes: StorageBox[]): void {
 }
 
 export function generateNextSku(products: Product[]): string {
-  let highest = 0;
-  let hasAnySku = false;
-  for (const p of products) {
-    if (p.sku) {
-      const cleaned = p.sku.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u00A0\r\n\t]/g, '').trim();
-      const match = cleaned.match(/^([a-zA-Z_-]*?)0*(\d+)$/);
-      if (match) {
-        const num = parseInt(match[2], 10);
-        if (!isNaN(num)) {
-          hasAnySku = true;
-          if (num > highest) {
-            highest = num;
-          }
-        }
-      }
+  // Short Hash - Amazon Style (5 characters)
+  // Exclude confusing characters: 0, O, 1, I, L
+  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  const length = 5;
+  let newSku = '';
+  let isUnique = false;
+
+  while (!isUnique) {
+    newSku = '';
+    for (let i = 0; i < length; i++) {
+      newSku += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Check if this SKU already exists in the inventory
+    const exists = products.some(p => p.sku === newSku);
+    if (!exists) {
+      isUnique = true;
     }
   }
-  if (!hasAnySku || highest === 0) {
-    return 'VIN-1';
-  }
-  return `VIN-${highest + 1}`;
+
+  return newSku;
 }
 
 export function calculateStats(products: Product[]): ResellerStats {

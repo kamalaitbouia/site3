@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Printer, Archive, Sparkles, Tag } from 'lucide-react';
+import JsBarcode from 'jsbarcode';
 import { StorageBox } from '../types';
 import { useI18n } from '../lib/i18n';
 
@@ -17,6 +18,27 @@ export const PrintBoxLabelModal: React.FC<PrintBoxLabelModalProps> = ({
   itemsCount,
 }) => {
   const { t, lang } = useI18n();
+  const barcodeSvgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (isOpen && box && barcodeSvgRef.current) {
+      try {
+        JsBarcode(barcodeSvgRef.current, `BOX-${box.id}`, {
+          format: 'CODE128',
+          width: 2.5,
+          height: 80,
+          displayValue: true,
+          fontOptions: 'bold',
+          fontSize: 14,
+          margin: 10,
+          background: 'transparent',
+          lineColor: '#0f172a',
+        });
+      } catch (err) {
+        console.error('Error generating box barcode:', err);
+      }
+    }
+  }, [isOpen, box]);
 
   if (!isOpen || !box) return null;
 
@@ -73,24 +95,9 @@ export const PrintBoxLabelModal: React.FC<PrintBoxLabelModalProps> = ({
               </h1>
             </div>
 
-            {/* Visual Simulated Barcode for the Box */}
+            {/* Scannable Barcode for the Box */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center">
-              {/* Barcode lines */}
-              <div className="h-14 flex items-end gap-1 px-4 mb-2">
-                {[4, 2, 6, 3, 1, 5, 2, 7, 3, 2, 5, 1, 4, 6, 2, 3, 5, 1, 7, 3, 2, 4, 6, 2].map((h, i) => (
-                  <div
-                    key={i}
-                    className="bg-slate-900 rounded-xs"
-                    style={{
-                      width: i % 3 === 0 ? '4px' : i % 2 === 0 ? '2px' : '3px',
-                      height: `${h * 7 + 10}px`,
-                    }}
-                  />
-                ))}
-              </div>
-              <span className="font-mono text-xs font-bold text-slate-700 tracking-widest">
-                *{box.name.replace(/\s+/g, '-').toUpperCase()}*
-              </span>
+              <svg ref={barcodeSvgRef} className="max-w-full h-auto max-h-24"></svg>
             </div>
 
             {/* Box Meta: Capacity / Items count */}
