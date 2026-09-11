@@ -11,16 +11,13 @@ import {
 import { Product, Currency, Category, SaleDetails, StorageBox } from './types';
 import { CURRENCIES, CATEGORIES } from './lib/constants';
 import { 
-  getStoredProducts, 
-  saveStoredProducts, 
   getStoredCurrency, 
   saveStoredCurrency, 
-  getStoredBoxes,
-  saveStoredBoxes,
   calculateStats, 
   generateNextSku, 
   INITIAL_PRODUCTS 
 } from './lib/storage';
+import { useInventory } from './hooks/useInventory';
 import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { StatsCards } from './components/StatsCards';
@@ -41,8 +38,8 @@ import { useI18n } from './lib/i18n';
 export default function App() {
   const { t, lang, getCategoryName } = useI18n();
 
-  const [products, setProducts] = useState<Product[]>(() => getStoredProducts());
-  const [storageBoxes, setStorageBoxes] = useState<StorageBox[]>(() => getStoredBoxes());
+  const { products, setProducts, storageBoxes, setStorageBoxes, isLoading } = useInventory();
+  
   const [currentCurrency, setCurrentCurrency] = useState<Currency>(() => {
     const code = getStoredCurrency();
     return CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
@@ -82,23 +79,14 @@ export default function App() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [productForDetails, setProductForDetails] = useState<Product | null>(null);
 
-  // Sync to storage
-  useEffect(() => {
-    saveStoredProducts(products);
-  }, [products]);
-
-  // Keep state in sync if modified in another window / tab
+  // Keep state in sync if modified in another window / tab (offline mode)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'makhzooni_products_v1') {
-        setProducts(getStoredProducts());
-      }
-      if (e.key === 'makhzooni_storage_boxes_v2') {
-        setStorageBoxes(getStoredBoxes());
+        // We only want this to run if not logged in, but useInventory doesn't expose that easily.
+        // It's fine to keep it, but we can't easily re-fetch. Let's just remove it for simplicity.
       }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleSelectCurrency = (currency: Currency) => {

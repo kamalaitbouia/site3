@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidProduct(data, isCreate) {
+      let hasRequiredKeys = isCreate ? (data.keys().hasAll(['userId', 'sku', 'title', 'category', 'condition', 'purchasePrice', 'targetPrice', 'targetPlatform', 'status', 'createdAt', 'updatedAt', 'storageLocation', 'images']) && data.keys().size() >= 13 && data.keys().size() <= 18) : true;
+      let typesOk = (
+        data.userId is string && data.userId.size() <= 128 &&
+        data.sku is string && data.sku.size() <= 50 &&
+        data.title is string && data.title.size() <= 200 &&
+        data.category is string &&
+        data.condition is string &&
+        data.purchasePrice is number &&
+        data.targetPrice is number &&
+        data.targetPlatform is string &&
+        data.status is string &&
+        data.createdAt is string &&
+        data.updatedAt is string &&
+        data.images is list && data.images.size() <= 10 &&
+        (!('brand' in data) || (data.brand is string && data.brand.size() <= 100)) &&
+        (!('size' in data) || (data.size is string && data.size.size() <= 50)) &&
+        (!('color' in data) || (data.color is string && data.color.size() <= 50)) &&
+        (!('storageLocation' in data) || (data.storageLocation is string && data.storageLocation.size() <= 100)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        (!('purchaseDate' in data) || (data.purchaseDate is string && data.purchaseDate.size() <= 50)) &&
+        (!('sourceLocation' in data) || (data.sourceLocation is string && data.sourceLocation.size() <= 100))
+      );
+      let saleDetailsOk = (!('saleDetails' in data) || (
+        data.saleDetails is map &&
+        data.saleDetails.keys().hasAll(['soldPrice', 'saleDate', 'platform', 'platformFees', 'shippingFees', 'netProfit', 'roiPercentage']) &&
+        data.saleDetails.soldPrice is number &&
+        data.saleDetails.saleDate is string && data.saleDetails.saleDate.size() <= 50 &&
+        data.saleDetails.platform is string &&
+        data.saleDetails.platformFees is number &&
+        data.saleDetails.shippingFees is number &&
+        data.saleDetails.netProfit is number &&
+        data.saleDetails.roiPercentage is number &&
+        (!('buyerName' in data.saleDetails) || (data.saleDetails.buyerName is string && data.saleDetails.buyerName.size() <= 100))
+      ));
+      return hasRequiredKeys && typesOk && saleDetailsOk;
+    }
+
+    function isValidStorageBox(data, isCreate) {
+      let hasRequiredKeys = isCreate ? (data.keys().hasAll(['userId', 'name', 'createdAt']) && data.keys().size() >= 3 && data.keys().size() <= 7) : true;
+      let typesOk = (
+        data.userId is string && data.userId.size() <= 128 &&
+        data.name is string && data.name.size() <= 100 &&
+        data.createdAt is string &&
+        (!('zone' in data) || (data.zone is string && data.zone.size() <= 100)) &&
+        (!('color' in data) || (data.color is string && data.color.size() <= 50)) &&
+        (!('capacity' in data) || data.capacity is number) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
+      );
+      return hasRequiredKeys && typesOk;
+    }
+
+    match /users/{userId} {
+      match /products/{productId} {
+        allow get: if isOwner(userId) && isValidId(productId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(productId) && isValidProduct(incoming(), true) && incoming().userId == userId;
+        allow update: if isOwner(userId) && isValidId(productId) && isValidProduct(incoming(), false) && incoming().userId == existing().userId && incoming().createdAt == existing().createdAt;
+        allow delete: if isOwner(userId) && isValidId(productId);
+      }
+      match /storage_boxes/{boxId} {
+        allow get: if isOwner(userId) && isValidId(boxId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(boxId) && isValidStorageBox(incoming(), true) && incoming().userId == userId;
+        allow update: if isOwner(userId) && isValidId(boxId) && isValidStorageBox(incoming(), false) && incoming().userId == existing().userId && incoming().createdAt == existing().createdAt;
+        allow delete: if isOwner(userId) && isValidId(boxId);
+      }
+    }
+  }
+}

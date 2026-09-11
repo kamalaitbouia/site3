@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Represents an inventory item for a reseller.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 200 },
+        "brand": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "enum": ["clothing", "shoes", "bags", "accessories", "electronics", "home", "beauty", "other"] },
+        "size": { "type": "string", "maxLength": 50 },
+        "color": { "type": "string", "maxLength": 50 },
+        "condition": { "type": "string", "enum": ["new_with_tag", "new_no_tag", "very_good", "good", "satisfactory"] },
+        "storageLocation": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "purchasePrice": { "type": "number" },
+        "purchaseDate": { "type": "string", "maxLength": 50 },
+        "sourceLocation": { "type": "string", "maxLength": 100 },
+        "targetPrice": { "type": "number" },
+        "targetPlatform": { "type": "string", "enum": ["vinted", "ebay", "depop", "marketplace", "vestiaire", "other"] },
+        "status": { "type": "string", "enum": ["in_storage", "listed", "sold", "shipped", "archived"] },
+        "images": { "type": "array", "maxLength": 10 },
+        "saleDetails": {
+          "type": "object",
+          "properties": {
+            "soldPrice": { "type": "number" },
+            "saleDate": { "type": "string", "maxLength": 50 },
+            "platform": { "type": "string", "enum": ["vinted", "ebay", "depop", "marketplace", "vestiaire", "other"] },
+            "platformFees": { "type": "number" },
+            "shippingFees": { "type": "number" },
+            "netProfit": { "type": "number" },
+            "roiPercentage": { "type": "number" },
+            "buyerName": { "type": "string", "maxLength": 100 }
+          }
+        },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "sku", "title", "category", "condition", "purchasePrice", "targetPrice", "targetPlatform", "status", "createdAt", "updatedAt"]
+    },
+    "StorageBox": {
+      "title": "StorageBox",
+      "description": "Represents a storage location/box.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "zone": { "type": "string", "maxLength": 100 },
+        "color": { "type": "string", "maxLength": 50 },
+        "capacity": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Products for a user"
+    },
+    "/users/{userId}/storage_boxes/{boxId}": {
+      "schema": { "$ref": "#/entities/StorageBox" },
+      "description": "Storage boxes for a user"
+    }
+  }
+}

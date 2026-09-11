@@ -5,13 +5,16 @@ import {
   Download, 
   Package, 
   Plus,
-  ScanLine 
+  ScanLine,
+  UserCircle2,
+  LogOut
 } from 'lucide-react';
 import { Currency } from '../types';
 import { CURRENCIES } from '../lib/constants';
 import { PWAInstallButton } from './PWAInstallButton';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../lib/i18n';
+import { useFirebase } from './FirebaseProvider';
 
 interface NavbarProps {
   currentTab: 'inventory' | 'storage' | 'analytics';
@@ -35,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   inStockCount,
 }) => {
   const { t, lang } = useI18n();
+  const { user, signIn, logOut } = useFirebase();
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
@@ -92,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Right Controls: Language Switcher, Currency, Install PWA, Backup, Add Button */}
+          {/* Right Controls: Language Switcher, Currency, Auth, Backup, Add Button */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Language Switcher (compact on all screens to preserve space) */}
             <LanguageSwitcher variant="compact" />
@@ -116,10 +120,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </select>
             </div>
 
-            {/* PWA Install Button (desktop/tablet only to avoid mobile header cramping) */}
-            <div className="hidden sm:block">
-              <PWAInstallButton variant="header" />
-            </div>
+            {/* User Auth */}
+            {user ? (
+              <button
+                onClick={logOut}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/90 transition shrink-0 cursor-pointer"
+                title={lang === 'fr' ? 'Déconnexion' : 'تسجيل الخروج'}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline">{lang === 'fr' ? 'Déconnexion' : 'تسجيل الخروج'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={signIn}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/90 transition shrink-0 cursor-pointer"
+                title={lang === 'fr' ? 'Connexion Cloud' : 'تسجيل الدخول السحابي'}
+              >
+                <UserCircle2 className="w-4 h-4" />
+                <span className="hidden lg:inline">{lang === 'fr' ? 'Connexion' : 'تسجيل الدخول'}</span>
+              </button>
+            )}
 
             {/* Scanner CTA Button */}
             <button
@@ -156,3 +176,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
