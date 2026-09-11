@@ -7,7 +7,9 @@ import {
   Plus,
   ScanLine,
   UserCircle2,
-  LogOut
+  LogOut,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
 import { Currency } from '../types';
 import { CURRENCIES } from '../lib/constants';
@@ -120,13 +122,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               </select>
             </div>
 
+            {/* Cloud Sync */}
+            {user ? (
+              <button
+                onClick={logOut}
+                className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs font-bold bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200/90 transition shrink-0 cursor-pointer"
+                title={lang === 'fr' ? 'Déconnecter la synchronisation' : 'إلغاء المزامنة'}
+              >
+                <Cloud className="w-4 h-4" />
+                <span className="hidden lg:inline">{lang === 'fr' ? 'Synchronisé' : 'متصل بالسحابة'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={signIn}
+                className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/90 transition shrink-0 cursor-pointer"
+                title={lang === 'fr' ? 'Activer la synchronisation Cloud' : 'تفعيل المزامنة السحابية'}
+              >
+                <CloudOff className="w-4 h-4" />
+                <span className="hidden lg:inline">{lang === 'fr' ? 'Sync Cloud' : 'مزامنة'}</span>
+              </button>
+            )}
+
             {/* Lock App */}
             <button
               onClick={() => {
                 localStorage.removeItem('makhzooni_app_unlocked');
                 window.location.reload();
               }}
-              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/90 transition shrink-0 cursor-pointer"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/90 transition shrink-0 cursor-pointer"
               title={lang === 'fr' ? 'Verrouiller l\'application' : 'قفل التطبيق'}
             >
               <LogOut className="w-4 h-4" />

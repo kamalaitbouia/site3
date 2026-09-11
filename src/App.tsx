@@ -430,11 +430,11 @@ export default function App() {
 
                 {/* Actions: Add Product, Scan Barcode, Sort */}
                 <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {/* Add Product Button */}
+                  {/* Add Product Button (Hidden on mobile, in bottom nav) */}
                   <button
                     id="inventory-add-product-btn"
                     onClick={() => handleOpenAdd()}
-                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs hover:shadow transition shrink-0 cursor-pointer"
+                    className="hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs hover:shadow transition shrink-0 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>{t.navAddProduct}</span>
@@ -443,19 +443,19 @@ export default function App() {
                   <button
                     id="filter-bar-scan-btn"
                     onClick={() => setIsScannerModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/90 text-xs font-bold transition shrink-0 cursor-pointer"
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200/90 text-xs font-bold transition shrink-0 cursor-pointer"
                     title={t.scannerModalTitle}
                   >
                     <ScanLine className="w-4 h-4 text-teal-600" />
                     <span>{t.btnScanBarcode}</span>
                   </button>
 
-                  <div className="relative flex items-center">
+                  <div className="relative flex items-center flex-1 sm:flex-none">
                     <ArrowUpDown className={`w-3.5 h-3.5 text-slate-400 absolute ${lang === 'ar' ? 'right-3' : 'left-3'} pointer-events-none`} />
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
-                      className={`text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl ${lang === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2.5 text-slate-700 focus:outline-hidden cursor-pointer`}
+                      className={`w-full sm:w-auto text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl ${lang === 'ar' ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2.5 text-slate-700 focus:outline-hidden cursor-pointer`}
                     >
                       <option value="newest">{t.sortNewest}</option>
                       <option value="oldest">{t.sortOldest}</option>
