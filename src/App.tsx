@@ -33,10 +33,20 @@ import { ProfitAnalytics } from './components/ProfitAnalytics';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { VintedListingModal } from './components/VintedListingModal';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
+import { PinAuthModal } from './components/PinAuthModal';
 import { useI18n } from './lib/i18n';
 
 export default function App() {
   const { t, lang, getCategoryName } = useI18n();
+
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return localStorage.getItem('makhzooni_app_unlocked') === 'true';
+  });
+
+  const handleUnlock = () => {
+    localStorage.setItem('makhzooni_app_unlocked', 'true');
+    setIsUnlocked(true);
+  };
 
   const { products, setProducts, storageBoxes, setStorageBoxes, isLoading } = useInventory();
   
@@ -367,6 +377,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-32 md:pb-12 flex flex-col selection:bg-teal-500 selection:text-white">
+      { !isUnlocked && <PinAuthModal onUnlock={handleUnlock} /> }
+
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}

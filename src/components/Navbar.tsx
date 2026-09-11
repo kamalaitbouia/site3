@@ -120,26 +120,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               </select>
             </div>
 
-            {/* User Auth */}
-            {user ? (
-              <button
-                onClick={logOut}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/90 transition shrink-0 cursor-pointer"
-                title={lang === 'fr' ? 'Déconnexion' : 'تسجيل الخروج'}
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden lg:inline">{lang === 'fr' ? 'Déconnexion' : 'تسجيل الخروج'}</span>
-              </button>
-            ) : (
-              <button
-                onClick={signIn}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/90 transition shrink-0 cursor-pointer"
-                title={lang === 'fr' ? 'Connexion Cloud' : 'تسجيل الدخول السحابي'}
-              >
-                <UserCircle2 className="w-4 h-4" />
-                <span className="hidden lg:inline">{lang === 'fr' ? 'Connexion' : 'تسجيل الدخول'}</span>
-              </button>
-            )}
+            {/* Lock App */}
+            <button
+              onClick={() => {
+                localStorage.removeItem('makhzooni_app_unlocked');
+                window.location.reload();
+              }}
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/90 transition shrink-0 cursor-pointer"
+              title={lang === 'fr' ? 'Verrouiller l\'application' : 'قفل التطبيق'}
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden lg:inline">{lang === 'fr' ? 'Verrouiller' : 'قفل'}</span>
+            </button>
 
             {/* Scanner CTA Button */}
             <button
